@@ -1,105 +1,72 @@
-# Retail AI Intelligence Platform
+# Retail Intelligence Platform
 
-## Overview
+An interactive analytics dashboard for exploring retail sales, inventory, product, and demand-related data. The project demonstrates how data preparation and visualization can support business reporting.
 
-Retail AI Intelligence Platform is a data analytics and business intelligence dashboard built using Python and Streamlit. The platform helps analyze retail inventory, sales performance, demand forecasts, and business insights through interactive visualizations and KPI metrics.
+## Dashboard capabilities
 
-## Features
+- Retail KPI summaries
+- Sales performance analysis
+- Category and region comparisons
+- Inventory-level exploration
+- Units sold vs. demand forecast comparisons
+- Filters and dataset exploration
+- Interactive visual reporting
 
-* Interactive Retail Dashboard
-* Sales Performance Analytics
-* Inventory Monitoring System
-* Demand Forecast Analysis
-* Category-wise Sales Insights
-* Region-wise Sales Analysis
-* Business KPI Dashboard
-* Inventory Health Monitoring
-* Dataset Exploration and Filtering
-* Streamlit-based User Interface
+## Tech stack
 
-## Tech Stack
+Python · Streamlit · Pandas · NumPy · Matplotlib · scikit-learn
 
-* Python
-* Pandas
-* NumPy
-* Matplotlib
-* Streamlit
-* Scikit-Learn
+## Data
 
-## Dataset Information
+The project expects a retail inventory dataset with fields covering stores, products, inventory, sales, demand forecasts, pricing, discounts, regions, seasonal patterns, and competitor prices. Check the `data/` folder and dashboard code for the exact columns used.
 
-The project uses a retail inventory dataset containing:
+## Run locally
 
-* Store Information
-* Product Information
-* Inventory Levels
-* Units Sold
-* Demand Forecast
-* Product Pricing
-* Discounts
-* Region Data
-* Seasonal Trends
-* Competitor Pricing
+```bash
+git clone https://github.com/Madhum4107/Retail-Intelligence-Platform.git
+cd Retail-Intelligence-Platform
+python -m venv .venv
+```
 
-## Project Structure
+Activate:
 
-Retail_Intelligence_Platform/
+**Windows**
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
 
-├── dashboard/
+**macOS / Linux**
+```bash
+source .venv/bin/activate
+```
 
-│ └── app.py
+Install and launch:
 
-├── data/
-
-│ └── retail_store_inventory.csv
-
-├── screenshots/
-
-│ └── dashboard.png
-
-├── requirements.txt
-
-└── README.md
-
-## Dashboard Metrics
-
-* Total Sales
-* Average Inventory
-* Average Demand Forecast
-* Average Product Price
-
-## Visualizations
-
-* Category Wise Sales
-* Region Wise Sales
-* Demand Forecast vs Units Sold
-* Inventory Monitoring
-* Business Insights Dashboard
-
-## Installation
-
-1. Clone the repository
-
-2. Install dependencies
-
-pip install -r requirements.txt
-
-3. Run the application
-
+```bash
+python -m pip install -r requirements.txt
 streamlit run dashboard/app.py
+```
 
-## Future Enhancements
+## Repository structure
 
-* Advanced Demand Forecasting
-* Machine Learning Prediction Models
-* Automated Inventory Alerts
-* Real-Time Data Integration
-* Cloud Deployment
+```
+├── dashboard/     # Dashboard application
+├── data/          # Dataset(s)
+├── notebooks/     # Exploratory work
+├── screenshots/   # Visual previews
+└── requirements.txt
+```
+
+## Future ideas
+
+- More robust forecasting evaluation
+- Inventory risk and replenishment recommendations
+- Data-quality checks
+- Exportable business reports
+- Deployment and automated tests
 
 ## Author
 
-Madhumitha M
+**Madhumitha M** · AI & ML student
 
-B.Tech Information Technology
-
-Aspiring AI & Data Science Engineer
+[GitHub](https://github.com/Madhum4107) · [LinkedIn](https://www.linkedin.com/in/madhumitha4107/)
