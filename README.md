@@ -8,7 +8,7 @@ An interactive analytics dashboard for exploring retail sales, inventory, produc
 - Sales performance analysis
 - Category and region comparisons
 - Inventory-level exploration
-- Units sold vs. demand forecast comparisons
+- Category-aggregated sales vs. demand forecast comparisons\n- Forecast gap and forecast-gap percentage indicators\n- Inventory coverage and risk flags (out of stock / below forecast / at-or-above forecast)\n- Adjustable low-stock threshold
 - Filters and dataset exploration
 - Interactive visual reporting
 
