@@ -1,204 +1,126 @@
-import streamlit as st
+"""Interactive retail analytics dashboard."""
+
+from pathlib import Path
+
 import pandas as pd
-import matplotlib.pyplot as plt
+import streamlit as st
 
-# ---------------------------------
-# PAGE CONFIG
-# ---------------------------------
-st.set_page_config(
-    page_title="Retail AI Intelligence Platform",
-    layout="wide"
-)
+st.set_page_config(page_title="Retail Intelligence", page_icon="🛍️", layout="wide")
 
-# ---------------------------------
-# LOAD DATA
-# ---------------------------------
-@st.cache_data
-def load_data():
-    df = pd.read_csv("data/retail_store_inventory.csv")
-    return df
+DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "retail_store_inventory.csv"
+REQUIRED_COLUMNS = {
+    "Category", "Region", "Seasonality", "Units Sold",
+    "Inventory Level", "Demand Forecast", "Price",
+}
 
-df = load_data()
 
-# ---------------------------------
-# TITLE
-# ---------------------------------
-st.title("🛒 Retail AI Intelligence Platform")
-st.write("Smart Demand Prediction + Business Insights Dashboard")
+@st.cache_data(show_spinner="Loading retail dataset…")
+def load_data(path: str) -> pd.DataFrame:
+    return pd.read_csv(path)
 
-# ---------------------------------
-# SIDEBAR FILTERS
-# ---------------------------------
-st.sidebar.header("🔍 Filters")
 
-category = st.sidebar.selectbox(
-    "Category",
-    ["All"] + sorted(df["Category"].unique().tolist())
-)
+st.title("🛍️ Retail Intelligence Platform")
+st.write("Explore sales activity, inventory levels, and demand signals with interactive filters.")
 
-region = st.sidebar.selectbox(
-    "Region",
-    ["All"] + sorted(df["Region"].unique().tolist())
-)
+if not DATA_PATH.exists():
+    st.error(f"Dataset not found: {DATA_PATH}")
+    st.stop()
 
-season = st.sidebar.selectbox(
-    "Seasonality",
-    ["All"] + sorted(df["Seasonality"].unique().tolist())
-)
+df = load_data(str(DATA_PATH))
+missing_columns = REQUIRED_COLUMNS - set(df.columns)
+if missing_columns:
+    st.error("The dataset is missing required fields: " + ", ".join(sorted(missing_columns)))
+    st.stop()
 
-filtered_df = df.copy()
+with st.sidebar:
+    st.header("Filters")
+    category_options = sorted(df["Category"].dropna().unique().tolist())
+    region_options = sorted(df["Region"].dropna().unique().tolist())
+    season_options = sorted(df["Seasonality"].dropna().unique().tolist())
+    category = st.selectbox("Category", ["All"] + category_options)
+    region = st.selectbox("Region", ["All"] + region_options)
+    season = st.selectbox("Seasonality", ["All"] + season_options)
+    st.divider()
+    st.caption(f"Dataset: {len(df):,} rows · {len(df.columns)} columns")
 
+filtered = df.copy()
 if category != "All":
-    filtered_df = filtered_df[
-        filtered_df["Category"] == category
-    ]
-
+    filtered = filtered[filtered["Category"] == category]
 if region != "All":
-    filtered_df = filtered_df[
-        filtered_df["Region"] == region
-    ]
-
+    filtered = filtered[filtered["Region"] == region]
 if season != "All":
-    filtered_df = filtered_df[
-        filtered_df["Seasonality"] == season
-    ]
+    filtered = filtered[filtered["Seasonality"] == season]
 
-# ---------------------------------
-# KPI CARDS
-# ---------------------------------
-col1, col2, col3, col4 = st.columns(4)
+if filtered.empty:
+    st.warning("No rows match the selected filters. Try changing or clearing the filters.")
+    st.stop()
 
-with col1:
-    st.metric(
-        "💰 Total Sales",
-        f"{filtered_df['Units Sold'].sum():,.0f}"
-    )
+# KPI summary
+k1, k2, k3, k4 = st.columns(4)
+k1.metric("Units sold", f"{filtered['Units Sold'].sum():,.0f}")
+k2.metric("Average inventory", f"{filtered['Inventory Level'].mean():,.1f}")
+k3.metric("Average demand forecast", f"{filtered['Demand Forecast'].mean():,.2f}")
+k4.metric("Average product price", f"{filtered['Price'].mean():,.2f}")
 
-with col2:
-    st.metric(
-        "📦 Avg Inventory",
-        f"{filtered_df['Inventory Level'].mean():.0f}"
-    )
+st.divider()
 
-with col3:
-    st.metric(
-        "📈 Avg Forecast",
-        f"{filtered_df['Demand Forecast'].mean():.2f}"
-    )
+sales_tab, inventory_tab, data_tab = st.tabs(["📈 Sales insights", "📦 Inventory", "🧾 Data explorer"])
 
-with col4:
-    st.metric(
-        "💲 Avg Price",
-        f"{filtered_df['Price'].mean():.2f}"
-    )
+with sales_tab:
+    left, right = st.columns(2)
+    with left:
+        st.subheader("Units sold by category")
+        category_sales = filtered.groupby("Category")["Units Sold"].sum().sort_values(ascending=False)
+        st.bar_chart(category_sales)
+    with right:
+        st.subheader("Units sold by region")
+        region_sales = filtered.groupby("Region")["Units Sold"].sum().sort_values(ascending=False)
+        st.bar_chart(region_sales)
 
-# ---------------------------------
-# CATEGORY SALES
-# ---------------------------------
-st.subheader("📊 Category Wise Sales")
+    st.subheader("Demand forecast vs. units sold")
+    trend = filtered[["Demand Forecast", "Units Sold"]].reset_index(drop=True).head(100)
+    st.line_chart(trend)
+    st.caption("This chart compares the first 100 filtered records; it is not a time-series forecast evaluation.")
 
-category_sales = (
-    filtered_df.groupby("Category")["Units Sold"]
-    .sum()
-)
+    st.subheader("Business summary")
+    category_total = filtered.groupby("Category")["Units Sold"].sum()
+    region_total = filtered.groupby("Region")["Units Sold"].sum()
+    if not category_total.empty and not region_total.empty:
+        a, b, c = st.columns(3)
+        a.info(f"Top category by units: **{category_total.idxmax()}**")
+        b.info(f"Top region by units: **{region_total.idxmax()}**")
+        c.info(f"Highest row-level units sold: **{filtered['Units Sold'].max():,.0f}**")
 
-st.bar_chart(category_sales)
+with inventory_tab:
+    avg_inventory = filtered["Inventory Level"].mean()
+    if avg_inventory < 200:
+        st.warning(f"Average inventory is below the demo threshold (200 units): {avg_inventory:,.1f}.")
+    else:
+        st.success(f"Average inventory is at or above the demo threshold: {avg_inventory:,.1f}.")
 
-# ---------------------------------
-# REGION SALES
-# ---------------------------------
-st.subheader("🌍 Region Wise Sales")
+    low_stock = filtered[filtered["Inventory Level"] < 50].sort_values("Inventory Level")
+    st.subheader("Low-inventory records (below 50 units)")
+    st.dataframe(low_stock.head(50), use_container_width=True, hide_index=True)
+    st.caption("Thresholds are illustrative and should be adjusted to each product's replenishment policy.")
 
-region_sales = (
-    filtered_df.groupby("Region")["Units Sold"]
-    .sum()
-)
-
-st.bar_chart(region_sales)
-
-# ---------------------------------
-# DEMAND VS SALES
-# ---------------------------------
-st.subheader("📈 Demand Forecast vs Units Sold")
-
-chart_df = filtered_df[
-    ["Demand Forecast", "Units Sold"]
-].head(100)
-
-st.line_chart(chart_df)
-
-# ---------------------------------
-# INVENTORY STATUS
-# ---------------------------------
-st.subheader("🚨 Inventory Status")
-
-avg_inventory = filtered_df["Inventory Level"].mean()
-
-if avg_inventory < 200:
-    st.error("Low Inventory Alert 🚨")
-else:
-    st.success("Inventory Level Healthy ✅")
-
-# ---------------------------------
-# LOW STOCK PRODUCTS
-# ---------------------------------
-st.subheader("⚠️ Low Inventory Records")
-
-low_stock = filtered_df[
-    filtered_df["Inventory Level"] < 50
-]
-
-st.dataframe(low_stock.head(20))
-
-# ---------------------------------
-# BUSINESS INSIGHTS
-# ---------------------------------
-st.subheader("📈 Business Insights")
-
-best_category = (
-    filtered_df.groupby("Category")["Units Sold"]
-    .sum()
-    .idxmax()
-)
-
-best_region = (
-    filtered_df.groupby("Region")["Units Sold"]
-    .sum()
-    .idxmax()
-)
-
-st.write(f"🏆 Best Category: {best_category}")
-st.write(f"🌍 Best Region: {best_region}")
-
-st.write(
-    f"💰 Highest Sale: {filtered_df['Units Sold'].max()}"
-)
-
-st.write(
-    f"📉 Lowest Sale: {filtered_df['Units Sold'].min()}"
-)
-
-# ---------------------------------
-# DATA PREVIEW
-# ---------------------------------
-st.subheader("📋 Dataset Preview")
-
-st.dataframe(filtered_df.head(20))
-
-# ---------------------------------
-# DOWNLOAD REPORT
-# ---------------------------------
-csv = filtered_df.to_csv(index=False)
+with data_tab:
+    st.subheader("Filtered dataset")
+    st.dataframe(filtered.head(500), use_container_width=True, hide_index=True)
+    st.caption(f"Showing up to 500 of {len(filtered):,} filtered records.")
+    st.subheader("Data quality snapshot")
+    quality = pd.DataFrame({
+        "Column": filtered.columns,
+        "Missing values": filtered.isna().sum().values,
+        "Data type": filtered.dtypes.astype(str).values,
+    })
+    st.dataframe(quality, use_container_width=True, hide_index=True)
 
 st.download_button(
-    label="📥 Download Report",
-    data=csv,
-    file_name="retail_report.csv",
-    mime="text/csv"
+    "⬇️ Download filtered data (CSV)",
+    data=filtered.to_csv(index=False),
+    file_name="retail_filtered_data.csv",
+    mime="text/csv",
 )
 
-# ---------------------------------
-# FOOTER
-# ---------------------------------
-st.markdown("---")
-st.caption("🚀 AI Retail Intelligence Platform | Streamlit Dashboard")
+st.divider()
+st.caption("Built with Python · Streamlit · Pandas | Portfolio analytics prototype")
