@@ -17,8 +17,8 @@ def add_business_metrics(frame):
     out["Forecast Gap"]=pd.to_numeric(out["Demand Forecast"],errors="coerce")-pd.to_numeric(out["Units Sold"],errors="coerce")
     sales=pd.to_numeric(out["Units Sold"],errors="coerce")
     forecast=pd.to_numeric(out["Demand Forecast"],errors="coerce")
-    out["Forecast Gap %"]=(out["Forecast Gap"]/sales.replace(0,pd.NA)*100).round(2)
-    out["Inventory Coverage"]=(pd.to_numeric(out["Inventory Level"],errors="coerce")/forecast.replace(0,pd.NA)).round(2)
+    out["Forecast Gap %"]=(out["Forecast Gap"]/sales.mask(sales.eq(0))*100).round(2)
+    out["Inventory Coverage"]=(pd.to_numeric(out["Inventory Level"],errors="coerce")/forecast.mask(forecast.eq(0))).round(2)
     out["Inventory Risk"]=pd.Series("Review",index=out.index,dtype="string")
     out.loc[out["Inventory Level"]<=0,"Inventory Risk"]="Out of stock"
     out.loc[(out["Inventory Level"]>0)&(out["Inventory Level"]<forecast),"Inventory Risk"]="Below forecast"
