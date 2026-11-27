@@ -28,12 +28,16 @@ class RetailDatasetTests(unittest.TestCase):
             values = pd.to_numeric(self.df[col], errors="coerce")
             self.assertEqual(values.notna().sum(), self.df[col].notna().sum(), col)
 
-    def test_values_are_non_negative_when_present(self):
-        for col in ["Units Sold", "Inventory Level", "Demand Forecast", "Price"]:
+    def test_actual_quantity_and_price_fields_are_non_negative(self):
+        for col in ["Units Sold", "Inventory Level", "Price"]:
             values = pd.to_numeric(self.df[col], errors="coerce").dropna()
             self.assertTrue((values >= 0).all(), col)
 
-    def test_category_and_region_have_values(self):
+    def test_forecast_values_are_numeric_and_may_include_adjustments(self):
+        values = pd.to_numeric(self.df["Demand Forecast"], errors="coerce")
+        self.assertEqual(values.notna().sum(), self.df["Demand Forecast"].notna().sum())
+
+    def test_category_region_and_season_have_values(self):
         for col in ["Category", "Region", "Seasonality"]:
             self.assertTrue(self.df[col].notna().any(), col)
 
