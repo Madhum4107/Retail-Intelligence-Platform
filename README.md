@@ -2,7 +2,7 @@
 
 An interactive analytics dashboard for exploring retail sales, inventory, product, and demand-related data. The project demonstrates how data preparation and visualization can support business reporting.
 
-## Dashboard capabilities
+## Screenshots\n\n![Category sales](<screenshots/category wise sales.png.png>)\n\n![Region sales](<screenshots/region wise seles.png.png>)\n\n![Demand vs units sold](<screenshots/df vs us.png.png>)\n\n![Inventory and insights](<screenshots/investery status & business insights.png.png>)\n\n## Dashboard capabilities
 
 - Retail KPI summaries
 - Sales performance analysis
@@ -14,7 +14,7 @@ An interactive analytics dashboard for exploring retail sales, inventory, produc
 
 ## Tech stack
 
-Python · Streamlit · Pandas · NumPy · Matplotlib · scikit-learn
+Python · Streamlit · Pandas
 
 ## Data
 
