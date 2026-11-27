@@ -5,6 +5,8 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from dashboard.analytics import add_business_metrics, category_summary, validate_dataset
+
 st.set_page_config(page_title="Retail Intelligence", page_icon="🛍️", layout="wide")
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "retail_store_inventory.csv"
@@ -27,10 +29,13 @@ if not DATA_PATH.exists():
     st.stop()
 
 df = load_data(str(DATA_PATH))
-missing_columns = REQUIRED_COLUMNS - set(df.columns)
-if missing_columns:
-    st.error("The dataset is missing required fields: " + ", ".join(sorted(missing_columns)))
+dataset_errors = validate_dataset(df)
+if dataset_errors:
+    for error in dataset_errors:
+        st.error(error)
     st.stop()
+
+df = add_business_metrics(df)
 
 with st.sidebar:
     st.header("Filters")
@@ -40,6 +45,7 @@ with st.sidebar:
     category = st.selectbox("Category", ["All"] + category_options)
     region = st.selectbox("Region", ["All"] + region_options)
     season = st.selectbox("Seasonality", ["All"] + season_options)
+    low_stock_threshold = st.number_input("Low-stock threshold", min_value=0.0, value=50.0, step=5.0)
     st.divider()
     st.caption(f"Dataset: {len(df):,} rows · {len(df.columns)} columns")
 
@@ -78,9 +84,9 @@ with sales_tab:
         st.bar_chart(region_sales)
 
     st.subheader("Demand forecast vs. units sold")
-    trend = filtered[["Demand Forecast", "Units Sold"]].reset_index(drop=True).head(100)
-    st.line_chart(trend)
-    st.caption("This chart compares the first 100 filtered records; it is not a time-series forecast evaluation.")
+    grouped = category_summary(filtered).set_index("Category")[["Units_Sold", "Demand_Forecast"]]
+    st.bar_chart(grouped)
+    st.caption("Values are aggregated by category. Forecast gaps are descriptive comparisons, not forecast-accuracy measurements.")
 
     st.subheader("Business summary")
     category_total = filtered.groupby("Category")["Units Sold"].sum()
@@ -98,10 +104,10 @@ with inventory_tab:
     else:
         st.success(f"Average inventory is at or above the demo threshold: {avg_inventory:,.1f}.")
 
-    low_stock = filtered[filtered["Inventory Level"] < 50].sort_values("Inventory Level")
-    st.subheader("Low-inventory records (below 50 units)")
+    low_stock = filtered[filtered["Inventory Level"] < low_stock_threshold].sort_values("Inventory Level")
+    st.subheader(f"Low-inventory records (below {low_stock_threshold:g} units)")
     st.dataframe(low_stock.head(50), use_container_width=True, hide_index=True)
-    st.caption("Thresholds are illustrative and should be adjusted to each product's replenishment policy.")
+    st.caption("Inventory and forecast comparisons are simplified signals. Thresholds should reflect product-level replenishment policies.")
 
 with data_tab:
     st.subheader("Filtered dataset")
