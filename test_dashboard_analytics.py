@@ -8,7 +8,7 @@ class AnalyticsTests(unittest.TestCase):
         self.assertEqual(validate_dataset(sample()),[])
         self.assertIn("Dataset contains no rows.",validate_dataset(sample().iloc[:0]))
         self.assertTrue(any("Missing required" in x for x in validate_dataset(sample().drop(columns=["Region"]))))
-        bad=sample();bad.loc[0,"Price"]="bad"
+        bad=sample();bad["Price"]=bad["Price"].astype("object");bad.loc[0,"Price"]="bad"
         self.assertTrue(any("non-numeric" in x for x in validate_dataset(bad)))
     def test_forecast_gap_coverage(self):
         out=add_business_metrics(sample())
